@@ -1,0 +1,2 @@
+# cursor-dev
+dev code
