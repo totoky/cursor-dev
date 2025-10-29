@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>몸으로 말해요 - AI 게임</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 메인 메뉴 화면 -->
+    <div id="main-screen" class="screen active">
+        <div class="container">
+            <h1 class="game-title">🎭 몸으로 말해요</h1>
+            <p class="game-subtitle">AI 캐릭터의 몸짓을 보고 정답을 맞춰보세요!</p>
+            <div class="menu-buttons">
+                <button id="start-btn" class="btn btn-primary">게임 시작</button>
+                <button id="settings-btn" class="btn btn-secondary">설정</button>
+                <button id="help-btn" class="btn btn-secondary">게임 방법</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게임 화면 -->
+    <div id="game-screen" class="screen">
+        <div class="game-header">
+            <div class="score-board">
+                <span class="label">점수:</span>
+                <span id="score" class="value">0</span>
+            </div>
+            <div class="timer-board">
+                <span class="label">시간:</span>
+                <span id="timer" class="value">30</span>
+            </div>
+            <div class="round-board">
+                <span class="label">라운드:</span>
+                <span id="round" class="value">1/5</span>
+            </div>
+        </div>
+
+        <div class="game-content">
+            <!-- 캐릭터 애니메이션 영역 -->
+            <div class="character-container">
+                <canvas id="character-canvas" width="800" height="600"></canvas>
+                <div id="character-status" class="status-text">AI가 생각하고 있어요...</div>
+            </div>
+
+            <!-- 힌트 영역 (선택적) -->
+            <div id="hint-section" class="hint-section hidden">
+                <p class="hint-text">힌트: <span id="hint-text"></span></p>
+            </div>
+
+            <!-- 음성 인식 상태 -->
+            <div class="voice-status">
+                <div id="mic-indicator" class="mic-indicator">
+                    <div class="mic-icon">🎤</div>
+                    <p id="voice-text" class="voice-text">마이크 버튼을 눌러 정답을 말하세요</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-controls">
+            <button id="mic-btn" class="btn btn-voice">🎤 음성으로 답하기</button>
+            <button id="hint-btn" class="btn btn-hint">💡 힌트 (-10점)</button>
+            <button id="skip-btn" class="btn btn-skip">⏭️ 건너뛰기</button>
+            <button id="pause-btn" class="btn btn-pause">⏸️ 일시정지</button>
+        </div>
+    </div>
+
+    <!-- 결과 화면 -->
+    <div id="result-screen" class="screen">
+        <div class="container">
+            <h2 class="result-title">게임 종료!</h2>
+            <div class="result-content">
+                <div class="final-score">
+                    <p class="label">최종 점수</p>
+                    <p id="final-score" class="score-value">0</p>
+                </div>
+                <div class="result-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">정답:</span>
+                        <span id="correct-count" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">오답:</span>
+                        <span id="wrong-count" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">건너뛰기:</span>
+                        <span id="skip-count" class="stat-value">0</span>
+                    </div>
+                </div>
+                <div id="result-message" class="result-message"></div>
+            </div>
+            <div class="result-buttons">
+                <button id="replay-btn" class="btn btn-primary">다시 하기</button>
+                <button id="home-btn" class="btn btn-secondary">메인으로</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 일시정지 오버레이 -->
+    <div id="pause-overlay" class="overlay hidden">
+        <div class="overlay-content">
+            <h2>⏸️ 일시정지</h2>
+            <button id="resume-btn" class="btn btn-primary">계속하기</button>
+            <button id="quit-btn" class="btn btn-secondary">그만하기</button>
+        </div>
+    </div>
+
+    <!-- 도움말 오버레이 -->
+    <div id="help-overlay" class="overlay hidden">
+        <div class="overlay-content">
+            <h2>📖 게임 방법</h2>
+            <div class="help-text">
+                <p>1. AI 캐릭터가 몸짓으로 단어를 표현합니다</p>
+                <p>2. 마이크 버튼을 눌러 정답을 말하세요</p>
+                <p>3. 정답을 맞추면 점수를 획득합니다</p>
+                <p>4. 힌트를 사용하면 10점이 차감됩니다</p>
+                <p>5. 총 5라운드 동안 최고 점수를 목표로!</p>
+            </div>
+            <button id="close-help-btn" class="btn btn-primary">확인</button>
+        </div>
+    </div>
+
+    <!-- JavaScript 파일들 -->
+    <script src="js/words.js"></script>
+    <script src="js/character.js"></script>
+    <script src="js/speech.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
