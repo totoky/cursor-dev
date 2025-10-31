@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // 앱 초기화
 function initializeApp() {
     console.log('앱 초기화 시작');
+    console.log('실행 환경:', typeof tizen !== 'undefined' ? 'Tizen TV' : 'Web Browser');
     
     // 게임 인스턴스 생성
     game = new CharadesGame();
@@ -36,10 +37,16 @@ function initializeApp() {
     // 음성 인식 콜백 설정
     setupSpeechCallbacks();
     
+    // 키보드 이벤트 리스너 설정 (항상 등록)
+    setupKeyboardControls();
+    
     // Tizen TV 리모컨 지원 (있는 경우)
     if (typeof tizen !== 'undefined') {
         setupTizenControls();
     }
+    
+    // 초기 포커스 설정
+    setInitialFocus('main-screen');
     
     console.log('앱 초기화 완료');
 }
@@ -170,6 +177,8 @@ function startGame() {
 
 // 화면 전환
 function switchScreen(screenId) {
+    console.log(`화면 전환: ${currentScreen} -> ${screenId}`);
+    
     // 모든 화면 숨기기
     const screens = document.querySelectorAll('.screen');
     screens.forEach(screen => screen.classList.remove('active'));
@@ -179,6 +188,37 @@ function switchScreen(screenId) {
     if (targetScreen) {
         targetScreen.classList.add('active');
         currentScreen = screenId;
+        
+        // 화면 전환 후 첫 번째 버튼에 자동 포커스
+        setTimeout(() => {
+            setInitialFocus(screenId);
+        }, 100);
+    }
+}
+
+// 화면별 초기 포커스 설정
+function setInitialFocus(screenId) {
+    console.log(`초기 포커스 설정: ${screenId}`);
+    
+    let focusTarget = null;
+    
+    switch (screenId) {
+        case 'main-screen':
+            focusTarget = document.getElementById('start-btn');
+            break;
+        case 'game-screen':
+            focusTarget = document.getElementById('mic-btn');
+            break;
+        case 'result-screen':
+            focusTarget = document.getElementById('replay-btn');
+            break;
+    }
+    
+    if (focusTarget) {
+        focusTarget.focus();
+        console.log(`포커스 설정 완료: ${focusTarget.id}`);
+    } else {
+        console.warn(`포커스 대상을 찾을 수 없습니다: ${screenId}`);
     }
 }
 
@@ -362,88 +402,225 @@ function closeHelp() {
     document.getElementById('help-overlay').classList.add('hidden');
 }
 
+// 기본 키보드 컨트롤 설정 (항상 동작)
+function setupKeyboardControls() {
+    console.log('키보드 이벤트 리스너 등록 중...');
+    
+    document.addEventListener('keydown', (event) => {
+        console.log(`키 입력 감지: keyCode=${event.keyCode}, key=${event.key}, code=${event.code}`);
+        handleKeyDown(event);
+    });
+    
+    console.log('키보드 이벤트 리스너 등록 완료');
+}
+
 // Tizen 리모컨 컨트롤 설정
 function setupTizenControls() {
+    console.log('Tizen 환경 감지, 리모컨 키 등록 시작...');
+    
     try {
         // 리모컨 키 등록
         const keys = ['MediaPlay', 'MediaPause', 'MediaStop', 'MediaRewind', 
-                     'MediaFastForward', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+                     'MediaFastForward', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                     'ColorF0Red', 'ColorF1Green', 'ColorF2Yellow', 'ColorF3Blue'];
+        
+        let registeredKeys = [];
+        let failedKeys = [];
         
         keys.forEach(key => {
             try {
                 tizen.tvinputdevice.registerKey(key);
+                registeredKeys.push(key);
+                console.log(`✓ 키 등록 성공: ${key}`);
             } catch (e) {
-                console.warn(`키 등록 실패: ${key}`);
+                failedKeys.push(key);
+                console.warn(`✗ 키 등록 실패: ${key}`, e);
             }
         });
         
-        // 키 이벤트 리스너
-        document.addEventListener('keydown', handleTizenKeyDown);
+        console.log(`Tizen 키 등록 완료: 성공 ${registeredKeys.length}개, 실패 ${failedKeys.length}개`);
         
-        console.log('Tizen 리모컨 컨트롤 설정 완료');
+        if (registeredKeys.length > 0) {
+            console.log('등록된 키:', registeredKeys.join(', '));
+        }
+        if (failedKeys.length > 0) {
+            console.log('실패한 키:', failedKeys.join(', '));
+        }
+        
     } catch (error) {
         console.error('Tizen 리모컨 설정 오류:', error);
     }
 }
 
-// Tizen 키 이벤트 핸들러
-function handleTizenKeyDown(event) {
-    switch (event.keyCode) {
+// 통합 키 이벤트 핸들러
+function handleKeyDown(event) {
+    console.log(`키 처리: keyCode=${event.keyCode}, 현재 화면=${currentScreen}`);
+    
+    const handled = handleKeyAction(event.keyCode);
+    
+    if (handled) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+}
+
+// 키 액션 처리 (Tizen과 일반 키보드 모두 지원)
+function handleKeyAction(keyCode) {
+    switch (keyCode) {
         case 13: // Enter - 선택
             handleEnterKey();
-            break;
+            return true;
+            
         case 37: // Left
             handleLeftKey();
-            break;
+            return true;
+            
         case 38: // Up
             handleUpKey();
-            break;
+            return true;
+            
         case 39: // Right
             handleRightKey();
-            break;
+            return true;
+            
         case 40: // Down
             handleDownKey();
-            break;
-        case 10009: // Return/Back
+            return true;
+            
+        case 10009: // Tizen Return/Back
+        case 27: // ESC (일반 키보드)
             handleBackKey();
-            event.preventDefault();
-            break;
-        case 415: // Play
+            return true;
+            
+        case 415: // Tizen Play
+        case 179: // 일반 미디어 Play/Pause
             if (currentScreen === 'game-screen') {
                 toggleMicrophone();
+                return true;
             }
             break;
-        case 19: // Pause
+            
+        case 19: // Tizen Pause
+        case 80: // P 키 (일반 키보드)
             if (currentScreen === 'game-screen') {
                 pauseGame();
+                return true;
             }
             break;
+            
+        case 72: // H 키 - 힌트
+            if (currentScreen === 'game-screen') {
+                useHint();
+                return true;
+            }
+            break;
+            
+        case 83: // S 키 - 건너뛰기
+            if (currentScreen === 'game-screen') {
+                skipQuestion();
+                return true;
+            }
+            break;
+            
+        default:
+            console.log(`처리되지 않은 키: ${keyCode}`);
+            return false;
     }
+    
+    return false;
 }
 
 // 리모컨 키 핸들러들
 function handleEnterKey() {
+    console.log('Enter 키 처리');
+    
     // 현재 포커스된 버튼 클릭
     const focusedElement = document.activeElement;
     if (focusedElement && focusedElement.tagName === 'BUTTON') {
+        console.log('포커스된 버튼 클릭:', focusedElement.id);
         focusedElement.click();
+    } else {
+        // 포커스된 요소가 없으면 화면에 따라 기본 동작
+        if (currentScreen === 'main-screen') {
+            console.log('메인 화면에서 Enter - 게임 시작');
+            const startBtn = document.getElementById('start-btn');
+            if (startBtn) {
+                startBtn.focus();
+                startBtn.click();
+            }
+        }
     }
 }
 
 function handleLeftKey() {
-    // 포커스 이동 로직
+    console.log('Left 키 처리');
+    moveFocus('left');
 }
 
 function handleUpKey() {
-    // 포커스 이동 로직
+    console.log('Up 키 처리');
+    moveFocus('up');
 }
 
 function handleRightKey() {
-    // 포커스 이동 로직
+    console.log('Right 키 처리');
+    moveFocus('right');
 }
 
 function handleDownKey() {
-    // 포커스 이동 로직
+    console.log('Down 키 처리');
+    moveFocus('down');
+}
+
+// 포커스 이동 로직
+function moveFocus(direction) {
+    const currentFocused = document.activeElement;
+    const currentScreenElement = document.querySelector('.screen.active');
+    
+    if (!currentScreenElement) {
+        console.warn('활성화된 화면을 찾을 수 없습니다');
+        return;
+    }
+    
+    // 현재 화면의 모든 포커스 가능한 요소들
+    const focusableElements = Array.from(
+        currentScreenElement.querySelectorAll('button:not([disabled]), a, input, select, textarea, [tabindex]:not([tabindex="-1"])')
+    ).filter(el => {
+        const style = window.getComputedStyle(el);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+    });
+    
+    if (focusableElements.length === 0) {
+        console.log('포커스 가능한 요소가 없습니다');
+        return;
+    }
+    
+    let currentIndex = focusableElements.indexOf(currentFocused);
+    
+    // 현재 포커스된 요소가 없으면 첫 번째 요소로
+    if (currentIndex === -1) {
+        console.log('첫 번째 요소로 포커스 이동');
+        focusableElements[0].focus();
+        return;
+    }
+    
+    let nextIndex = currentIndex;
+    
+    switch (direction) {
+        case 'left':
+        case 'up':
+            nextIndex = currentIndex - 1;
+            if (nextIndex < 0) nextIndex = focusableElements.length - 1;
+            break;
+        case 'right':
+        case 'down':
+            nextIndex = currentIndex + 1;
+            if (nextIndex >= focusableElements.length) nextIndex = 0;
+            break;
+    }
+    
+    console.log(`포커스 이동: ${currentIndex} -> ${nextIndex}`);
+    focusableElements[nextIndex].focus();
 }
 
 function handleBackKey() {
