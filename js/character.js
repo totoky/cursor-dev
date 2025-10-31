@@ -5,10 +5,19 @@
 
 class CharacterAnimator {
     constructor(canvasId) {
+        console.log('[CharacterAnimator] 초기화 시작, canvasId:', canvasId);
         this.canvas = document.getElementById(canvasId);
+        
+        if (!this.canvas) {
+            console.error('[CharacterAnimator] 캔버스를 찾을 수 없습니다:', canvasId);
+            return;
+        }
+        
+        console.log('[CharacterAnimator] 캔버스 찾음:', this.canvas);
         this.ctx = this.canvas.getContext('2d');
         this.width = this.canvas.width;
         this.height = this.canvas.height;
+        console.log('[CharacterAnimator] 캔버스 크기:', this.width, 'x', this.height);
         
         // 캐릭터 기본 설정
         this.character = {
@@ -26,6 +35,7 @@ class CharacterAnimator {
         this.isAnimating = false;
         
         // 초기 idle 애니메이션 시작
+        console.log('[CharacterAnimator] idle 애니메이션 시작 호출');
         this.startIdleAnimation();
     }
     
@@ -199,9 +209,15 @@ class CharacterAnimator {
     
     // idle 애니메이션 시작
     startIdleAnimation() {
+        console.log('[CharacterAnimator] startIdleAnimation 호출됨');
+        if (!this.canvas || !this.ctx) {
+            console.error('[CharacterAnimator] 캔버스가 초기화되지 않음');
+            return;
+        }
         this.currentGesture = null;
         this.animationFrame = 0;
         this.isAnimating = true;
+        console.log('[CharacterAnimator] animate() 호출 시작');
         this.animate();
     }
     
@@ -227,8 +243,18 @@ class CharacterAnimator {
     
     // 애니메이션 루프
     animate() {
+        if (this.animationFrame === 0) {
+            console.log('[CharacterAnimator] 첫 번째 animate() 호출, isAnimating:', this.isAnimating);
+        }
+        
         if (!this.isAnimating) {
+            console.log('[CharacterAnimator] 애니메이션 중지됨');
             this.animationRequestId = null;
+            return;
+        }
+        
+        if (!this.ctx) {
+            console.error('[CharacterAnimator] ctx가 없음, 애니메이션 중지');
             return;
         }
         
@@ -238,9 +264,17 @@ class CharacterAnimator {
             const gestureName = this.currentGesture[Math.floor(this.animationFrame / 60) % this.currentGesture.length];
             const pose = this.getGesturePose(gestureName, this.animationFrame % 60);
             this.drawStickman(this.character.x, this.character.y, this.character.scale, pose);
+            
+            if (this.animationFrame % 60 === 0) {
+                console.log('[CharacterAnimator] 제스처 애니메이션:', gestureName);
+            }
         } else {
             const pose = this.getIdlePose(this.animationFrame);
             this.drawStickman(this.character.x, this.character.y, this.character.scale, pose);
+            
+            if (this.animationFrame % 120 === 0) {
+                console.log('[CharacterAnimator] idle 애니메이션 프레임:', this.animationFrame);
+            }
         }
         
         this.animationFrame++;

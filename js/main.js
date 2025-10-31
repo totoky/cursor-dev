@@ -16,16 +16,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 앱 초기화
 function initializeApp() {
-    console.log('앱 초기화 시작');
+    console.log('===== 앱 초기화 시작 =====');
     console.log('실행 환경:', typeof tizen !== 'undefined' ? 'Tizen TV' : 'Web Browser');
     
     // 게임 인스턴스 생성
+    console.log('[main] 게임 인스턴스 생성');
     game = new CharadesGame();
     
     // 캐릭터 애니메이터 생성
+    console.log('[main] 캐릭터 애니메이터 생성 시도');
     characterAnimator = new CharacterAnimator('character-canvas');
+    console.log('[main] 캐릭터 애니메이터 생성 완료:', characterAnimator);
     
     // 음성 인식기 생성
+    console.log('[main] 음성 인식기 생성');
     speechRecognizer = new SpeechRecognizer();
     
     // 이벤트 리스너 설정
@@ -48,7 +52,7 @@ function initializeApp() {
     // 초기 포커스 설정
     setInitialFocus('main-screen');
     
-    console.log('앱 초기화 완료');
+    console.log('===== 앱 초기화 완료 =====');
 }
 
 // 이벤트 리스너 설정
@@ -254,10 +258,13 @@ function updateTimer(time) {
 
 // 캐릭터 애니메이션 시작
 function startCharacterAnimation(wordData) {
-    console.log('캐릭터 애니메이션 시작:', wordData.word);
+    console.log('[main] 캐릭터 애니메이션 시작:', wordData.word, 'gestures:', wordData.gestures);
     
     if (characterAnimator) {
+        console.log('[main] characterAnimator 존재, startGesture 호출');
         characterAnimator.startGesture(wordData.gestures);
+    } else {
+        console.error('[main] characterAnimator가 없음!');
     }
 }
 
