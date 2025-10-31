@@ -24,6 +24,9 @@ class CharacterAnimator {
         this.animationFrame = 0;
         this.animationSpeed = 0.1;
         this.isAnimating = false;
+        
+        // 초기 idle 애니메이션 시작
+        this.startIdleAnimation();
     }
     
     // 캔버스 초기화
@@ -194,23 +197,40 @@ class CharacterAnimator {
         }
     }
     
+    // idle 애니메이션 시작
+    startIdleAnimation() {
+        this.currentGesture = null;
+        this.animationFrame = 0;
+        this.isAnimating = true;
+        this.animate();
+    }
+    
     // 제스처 애니메이션 시작
     startGesture(gestures) {
         this.currentGesture = gestures;
         this.animationFrame = 0;
         this.isAnimating = true;
-        this.animate();
+        if (!this.animationRequestId) {
+            this.animate();
+        }
     }
     
     // 애니메이션 중지
     stopGesture() {
         this.isAnimating = false;
         this.currentGesture = null;
+        if (this.animationRequestId) {
+            cancelAnimationFrame(this.animationRequestId);
+            this.animationRequestId = null;
+        }
     }
     
     // 애니메이션 루프
     animate() {
-        if (!this.isAnimating) return;
+        if (!this.isAnimating) {
+            this.animationRequestId = null;
+            return;
+        }
         
         this.clear();
         
@@ -224,7 +244,7 @@ class CharacterAnimator {
         }
         
         this.animationFrame++;
-        requestAnimationFrame(() => this.animate());
+        this.animationRequestId = requestAnimationFrame(() => this.animate());
     }
     
     // 기본 대기 포즈

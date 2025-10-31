@@ -331,6 +331,10 @@ function quitGame() {
 function goHome() {
     if (characterAnimator) {
         characterAnimator.stopGesture();
+        // 메인 화면으로 돌아가면 다시 idle 애니메이션 시작
+        setTimeout(() => {
+            characterAnimator.startIdleAnimation();
+        }, 100);
     }
     
     // 오버레이 숨기기
