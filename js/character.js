@@ -199,6 +199,12 @@ class CharacterAnimator {
     
     // idle 애니메이션 시작
     startIdleAnimation() {
+        // 기존 애니메이션이 있다면 중지
+        if (this.animationRequestId) {
+            cancelAnimationFrame(this.animationRequestId);
+            this.animationRequestId = null;
+        }
+        
         this.currentGesture = null;
         this.animationFrame = 0;
         this.isAnimating = true;
@@ -207,12 +213,16 @@ class CharacterAnimator {
     
     // 제스처 애니메이션 시작
     startGesture(gestures) {
+        // 기존 애니메이션이 있다면 중지
+        if (this.animationRequestId) {
+            cancelAnimationFrame(this.animationRequestId);
+            this.animationRequestId = null;
+        }
+        
         this.currentGesture = gestures;
         this.animationFrame = 0;
         this.isAnimating = true;
-        if (!this.animationRequestId) {
-            this.animate();
-        }
+        this.animate();
     }
     
     // 애니메이션 중지
